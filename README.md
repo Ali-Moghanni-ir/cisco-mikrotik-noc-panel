@@ -7,4 +7,5 @@ Upon first execution, the system auto-generates the initial administrator accoun
 URL: http://127.0.0.1:5000
 
 Username: admin
+
 Password: admin
