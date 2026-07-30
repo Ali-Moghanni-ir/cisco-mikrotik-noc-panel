@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  automation-panel:
+    build: .
+    container_name: sadranet-automation-panel
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mounts the local database folder into the container so inventory is persistent
+      - ./database:/opt/sadranet-panel/database
+      # Optional: Mount playbooks if you want to edit them without rebuilding the image
+      - ./playbooks:/opt/sadranet-panel/playbooks

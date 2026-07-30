@@ -1,0 +1,82 @@
+{% extends "index.html" %}
+
+{% block title %}{{ device.name }} - Telemetry{% endblock %}
+
+{% block extra_css %}
+    /* استایل‌های اختصاصی کارت‌های گرافیکی و آیکون‌های مانیتورینگ زنده */
+    .device-header { background: var(--surface); padding: 25px 30px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); animation: fadeUp 0.3s ease-out forwards;}
+    .device-info h2 { margin: 0 0 8px 0; font-size: 22px; font-weight: 700;}
+    .device-info p { margin: 0; color: var(--primary); font-family: 'JetBrains Mono', monospace; font-size: 14px; display: flex; align-items: center; gap: 8px;}
+    
+    .status-badge { padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;}
+    .status-online { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);}
+    .status-offline { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);}
+    
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; }
+    .metric-card { background: var(--surface); padding: 30px 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 20px; transition: transform 0.3s, border-color 0.3s; animation: fadeUp 0.4s ease-out forwards; opacity: 0;}
+    .metric-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.1); }
+    .metric-card:nth-child(1) { animation-delay: 0.1s; }
+    .metric-card:nth-child(2) { animation-delay: 0.2s; }
+    .metric-card:nth-child(3) { animation-delay: 0.3s; }
+    .metric-card:nth-child(4) { animation-delay: 0.4s; }
+    
+    .metric-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
+    .metric-data h3 { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+    .metric-data p { margin: 8px 0 0 0; font-size: 26px; font-weight: 800; color: var(--text-main); font-variant-numeric: tabular-nums;}
+    
+    .bg-cpu { background: linear-gradient(135deg, #0ea5e9, #2563eb); }
+    .bg-ram { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .bg-temp { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .bg-time { background: linear-gradient(135deg, #10b981, #059669); }
+{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h1>Device Telemetry</h1>
+</div>
+
+<div class="device-header">
+    <div class="device-info">
+        <h2>{{ device.name }}</h2>
+        <p><i class="fa-solid fa-network-wired"></i> IPv4: {{ device.ip_address }}</p>
+    </div>
+    <div>
+        {% if health.status == 'Online' %}
+            <span class="status-badge status-online"><i class="fa-solid fa-signal-stream"></i> Link Active</span>
+        {% else %}
+            <span class="status-badge status-offline"><i class="fa-solid fa-link-slash"></i> Link Down</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-icon bg-cpu"><i class="fa-solid fa-microchip"></i></div>
+        <div class="metric-data">
+            <h3>CPU Load (5s)</h3>
+            <p>{{ health.cpu }}</p>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon bg-ram"><i class="fa-solid fa-memory"></i></div>
+        <div class="metric-data">
+            <h3>Memory Alloc</h3>
+            <p>{{ health.memory }}</p>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon bg-temp"><i class="fa-solid fa-temperature-half"></i></div>
+        <div class="metric-data">
+            <h3>Thermal Temp</h3>
+            <p>{{ health.temperature }}</p>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon bg-time"><i class="fa-solid fa-clock"></i></div>
+        <div class="metric-data">
+            <h3>System Uptime</h3>
+            <p style="font-size: 16px; margin-top: 14px;">{{ health.uptime }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "index.html" %}
+
+{% block title %}No-Code Runner - Operations Center{% endblock %}
+
+{% block extra_css %}
+    /* استایل‌های اختصاصی صفحه آپلود و اجرای پلی‌بوک */
+    .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; animation: fadeUp 0.4s ease-out forwards; }
+    
+    input[type="file"] { background: transparent; padding: 0; }
+    input[type="file"]::file-selector-button { background: var(--primary); color: #0b1120; border: none; padding: 10px 15px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-right: 15px; transition: 0.2s;}
+    input[type="file"]::file-selector-button:hover { background: #0284c7; }
+    
+    .btn-upload { background: linear-gradient(135deg, #8b5cf6, #6d28d9); margin-top: 10px;}
+    .btn-upload:hover { box-shadow: 0 10px 20px -10px rgba(139, 92, 246, 0.5); transform: translateY(-2px);}
+{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h1>Automation Runner</h1>
+</div>
+
+<div class="grid-layout">
+    <!-- کارت آپلود فایل -->
+    <div class="card" style="border-color: rgba(139, 92, 246, 0.3);">
+        <div class="card-header"><i class="fa-solid fa-cloud-arrow-up" style="color: #8b5cf6;"></i> Upload Custom Playbook</div>
+        <div class="card-body">
+            <form action="{{ url_for('upload_playbook') }}" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Select YAML File</label>
+                    <input type="file" name="file" class="form-control" accept=".yml,.yaml" required>
+                </div>
+                <p style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Only .yml and .yaml files are allowed. Files will be saved directly to the automation engine.</p>
+                <button type="submit" class="btn btn-upload"><i class="fa-solid fa-upload"></i> Upload to Server</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- کارت اجرای فایل داینامیک -->
+    <div class="card">
+        <div class="card-header"><i class="fa-solid fa-play"></i> Execute Playbook</div>
+        <div class="card-body">
+            <form action="{{ url_for('run_playbook') }}" method="POST">
+                <div class="form-group">
+                    <label>Select Playbook File</label>
+                    <select name="playbook_name" class="form-control" required>
+                        <option value="" disabled selected>Choose a playbook...</option>
+                        {% for playbook in available_playbooks %}
+                            <option value="{{ playbook }}">{{ playbook }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Hardware</label>
+                    <select name="device_id" class="form-control" required>
+                        <option value="" disabled selected>Select equipment...</option>
+                        {% for device in devices %}
+                            <option value="{{ device.id }}">{{ device.name }} ({{ device.ip_address }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="margin-top:10px;"><i class="fa-solid fa-rocket"></i> Deploy Script</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- کارت پشتیبان‌گیری سریع -->
+    <div class="card">
+        <div class="card-header"><i class="fa-solid fa-download"></i> Quick Action: Backup</div>
+        <div class="card-body">
+            <form action="{{ url_for('run_playbook') }}" method="POST">
+                <input type="hidden" name="playbook_name" value="backup_config.yml">
+                <div class="form-group">
+                    <label>Target Hardware</label>
+                    <select name="device_id" class="form-control" required>
+                        <option value="" disabled selected>Select equipment...</option>
+                        {% for device in devices %}
+                            <option value="{{ device.id }}">{{ device.name }} ({{ device.ip_address }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="margin-top:10px;"><i class="fa-solid fa-box-archive"></i> Run Backup</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

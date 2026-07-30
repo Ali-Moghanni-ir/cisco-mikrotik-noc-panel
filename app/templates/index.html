@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard - Operations Center{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg: #0B1120; --surface: #1E293B; --surface-hover: #334155; --border: #334155; --text-main: #F8FAFC; --text-muted: #94A3B8; --primary: #38BDF8; --accent: #818CF8; --danger: #EF4444; --success: #10B981;}
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+
+        .sidebar { width: 280px; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
+        .sidebar-header { padding: 30px 25px; display: flex; align-items: center; gap: 15px; }
+        .sidebar-header i { font-size: 28px; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .sidebar-header h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+        .sidebar-menu { padding: 10px 15px; flex: 1; }
+        .sidebar-menu a { display: flex; align-items: center; padding: 12px 20px; color: var(--text-muted); text-decoration: none; transition: 0.2s; font-weight: 500; font-size: 14px; border-radius: 8px; margin-bottom: 5px;}
+        .sidebar-menu a:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+        .sidebar-menu a.active { background: linear-gradient(to right, rgba(56, 189, 248, 0.1), transparent); color: var(--primary); border-left: 3px solid var(--primary); border-radius: 0 8px 8px 0;}
+        .sidebar-menu i { width: 24px; font-size: 16px; }
+
+        .main-content { flex: 1; overflow-y: auto; padding: 40px 50px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; width: 100%;}
+        .topbar h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -1px; }
+        
+        .card { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden; animation: fadeUp 0.4s ease-out forwards; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(20px); } }
+        .card-header { padding: 20px 25px; border-bottom: 1px solid var(--border); font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 10px; font-size: 15px; background: rgba(255,255,255,0.02);}
+        .card-header i { color: var(--primary); }
+        .card-body { padding: 25px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+        .form-control { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: white; transition: all 0.2s; box-sizing: border-box;}
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15); }
+        .btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #0284c7, #4f46e5); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px rgba(56, 189, 248, 0.5); }
+        
+        {% block extra_css %}
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-bottom: 30px; }
+        .user-profile { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); background: var(--surface); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border);}
+        .user-profile i { color: var(--primary); }
+        .btn-primary { background: var(--primary); color: #0b1120; border: none; margin-top: 10px;}
+        .btn-primary:hover { background: #0284c7; color: white;}
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 15px 25px; color: var(--text-muted); font-size: 12px; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 15px 25px; border-bottom: 1px solid rgba(51, 65, 85, 0.5); font-size: 14px; vertical-align: middle; color: var(--text-main); }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .ip-mono { font-family: 'JetBrains Mono', monospace; color: var(--primary); font-size: 13px;}
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; background: rgba(56, 189, 248, 0.1); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.2);}
+        .btn-action { background: transparent; color: var(--text-main); border: 1px solid var(--border); padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-action:hover { background: var(--surface-hover); border-color: var(--text-muted); }
+        .btn-action i { color: var(--primary); }
+        {% endblock %}
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-header">
+        <i class="fa-solid fa-layer-group"></i>
+        <h2>Automation Panel</h2>
+    </div>
+    
+    <div class="sidebar-menu">
+        <p style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin: 10px 0 10px 20px; letter-spacing: 1px;">Core Network</p>
+        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}"><i class="fa-solid fa-objects-column"></i> Overview</a>
+        <a href="#"><i class="fa-solid fa-chart-radar"></i> Live Telemetry</a>
+        <a href="{{ url_for('vlan_manager') }}" class="{% if request.endpoint == 'vlan_manager' %}active{% endif %}"><i class="fa-solid fa-network-wired"></i> VLAN Controller</a>
+        <a href="{{ url_for('playbook_runner') }}" class="{% if request.endpoint == 'playbook_runner' %}active{% endif %}"><i class="fa-solid fa-wand-magic-sparkles"></i> No-Code Runner</a>
+        
+        <p style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin: 30px 0 10px 20px; letter-spacing: 1px;">Security & Audit</p>
+        <a href="{{ url_for('acl_manager') }}" class="{% if request.endpoint == 'acl_manager' %}active{% endif %}"><i class="fa-solid fa-shield"></i> ACL Manager</a>
+        <a href="{{ url_for('view_logs') }}" class="{% if request.endpoint == 'view_logs' %}active{% endif %}"><i class="fa-solid fa-terminal"></i> Execution Logs</a>
+        <a href="{{ url_for('change_password') }}" class="{% if request.endpoint == 'change_password' %}active{% endif %}"><i class="fa-solid fa-key"></i> Credentials</a>
+        
+        <div style="position: absolute; bottom: 20px; width: 100%; padding: 0 15px; box-sizing: border-box;">
+            <a href="{{ url_for('logout') }}" style="color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); justify-content: center;"><i class="fa-solid fa-power-off"></i> Terminate Session</a>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; background: {% if category == 'danger' %}rgba(239, 68, 68, 0.1){% else %}rgba(16, 185, 129, 0.1){% endif %}; color: {% if category == 'danger' %}#fca5a5{% else %}#6ee7b7{% endif %}; border: 1px solid {% if category == 'danger' %}rgba(239, 68, 68, 0.2){% else %}rgba(16, 185, 129, 0.2){% endif %};">
+                    <i class="fa-solid {% if category == 'danger' %}fa-triangle-exclamation{% else %}fa-circle-check{% endif %}"></i> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}
+    <!-- محتوای پیش‌فرض (داشبورد) -->
+    <div class="topbar">
+        <h1>Infrastructure Topology</h1>
+        <div class="user-profile">
+            <i class="fa-solid fa-circle-user"></i> {{ current_user.username }}
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <div class="card-header"><i class="fa-solid fa-folder-tree"></i> Logical Grouping</div>
+            <div class="card-body">
+                <form action="{{ url_for('add_group') }}" method="POST">
+                    <div class="form-group">
+                        <label for="group_name">Zone / Area Name</label>
+                        <input type="text" id="group_name" name="group_name" class="form-control" placeholder="e.g., Core Switch Block" required>
+                    </div>
+                    <button type="submit" class="btn"><i class="fa-solid fa-plus"></i> Initialize Zone</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fa-solid fa-server"></i> Hardware Provisioning</div>
+            <div class="card-body">
+                <form action="{{ url_for('add_device') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                        <label for="device_name">Device Hostname</label>
+                        <input type="text" id="device_name" name="device_name" class="form-control" placeholder="e.g., R1-Edge" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="ip_address">IPv4 Address</label>
+                        <input type="text" id="ip_address" name="ip_address" class="form-control" placeholder="192.168.10.1" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="group_id">Target Zone</label>
+                        <select id="group_id" name="group_id" class="form-control" required>
+                            <option value="" disabled selected>Select zone...</option>
+                            {% for group in groups %}
+                                <option value="{{ group.id }}">{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="username">SSH Username</label>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="admin" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="password">SSH Secret</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-microchip"></i> Push to Database</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="fa-solid fa-database"></i> Managed Inventory Matrix</div>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hostname</th>
+                        <th>Target IP</th>
+                        <th>Zone Assignment</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ device.name }}</td>
+                        <td><span class="ip-mono">{{ device.ip_address }}</span></td>
+                        <td><span class="badge">{{ device.group.name if device.group else 'Unassigned' }}</span></td>
+                        <td>
+                            <a href="{{ url_for('device_health', device_id=device.id) }}" class="btn-action">
+                                <i class="fa-solid fa-satellite-dish"></i> Diagnostics
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 50px; color: var(--text-muted);">
+                            <i class="fa-solid fa-box-open" style="font-size: 30px; margin-bottom: 10px; display: block; color: var(--border);"></i>
+                            No hardware provisioned yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endblock %}
+</div>
+
+</body>
+</html>

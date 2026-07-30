@@ -1,0 +1,11 @@
+---
+- name: MikroTik Firewall Rule Management
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Apply Firewall Filter Rule
+      community.routeros.command:
+        commands:
+          # Note: MikroTik uses 'accept' and 'drop' instead of 'permit' and 'deny'
+          - "/ip firewall filter add chain=forward action={{ 'accept' if action == 'permit' else 'drop' }} protocol={{ protocol }} src-address={{ src_ip }} dst-address={{ dst_ip }} dst-port={{ port }} comment={{ acl_name }}"

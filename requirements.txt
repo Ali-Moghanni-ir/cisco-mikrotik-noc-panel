@@ -1,0 +1,8 @@
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Bcrypt==1.0.1
+Werkzeug==3.0.3
+netmiko==4.3.0
+gunicorn==22.0.0; platform_system != "Windows"
+ansible-core==2.16.6; platform_system != "Windows"
