@@ -85,17 +85,3 @@ Username: admin
 Password: admin
 
 (⚠️ Please change the default credentials via the Credentials page after initial login).
-
-📁 Repository Structure
-Plaintext
-├── app/
-│   ├── models.py          # SQLAlchemy Database Schemas
-│   ├── routes.py          # Flask Endpoints & Automation Logic (Cross-platform aware)
-│   └── templates/         # Jinja2 HTML Templates
-├── backups/               # Auto-generated device configuration backups
-├── database/              # SQLite DB Storage (.panel.db created at runtime)
-├── playbooks/             # Ansible Playbooks Repository (.yml)
-├── app.py                 # Application Entry Point & Auto-DB Initializer
-├── requirements.txt       # Dependencies with OS-specific markers
-├── run_linux.sh           # One-Click Linux Launch Script
-└── run_win.bat            # One-Click Windows Launch Script
