@@ -5,7 +5,6 @@ import platform
 import subprocess
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.wrappers import Response as WerkzeugResponse
 from werkzeug.utils import secure_filename
 
 from app import app, db, bcrypt
@@ -17,15 +16,7 @@ from app.models import Device, Group, AuditLog, User
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
 logger = logging.getLogger("Montazeri_NOC")
 
-ALLOWED_PLAYBOOKS = {
-    'cisco_acl.yml', 
-    'manage-vlan.yml', 
-    'mikrotik_acl.yml', 
-    'test_connection.yml', 
-    'backup_config.yml', 
-    'check_interfaces.yml'
-}
-ANSIBLE_TIMEOUT = 300 
+ANSIBLE_TIMEOUT = 120 
 
 # ==========================================
 # 🔐 1. Authentication
@@ -42,7 +33,7 @@ def login():
             logger.info(f"Operator {username} authenticated successfully.")
             return redirect(url_for('index'))
         else:
-            flash('نام کاربری یا کلمه عبور اشتباه است.', 'danger')
+            flash('Invalid username or password.', 'danger')
             
     return render_template('login.html')
 
@@ -61,13 +52,13 @@ def change_password():
         confirm_password = request.form.get('confirm_password')
 
         if not bcrypt.check_password_hash(current_user.password, current_password):
-            flash('رمز عبور فعلی نامعتبر است.', 'danger')
+            flash('Current password is invalid.', 'danger')
         elif new_password != confirm_password:
-            flash('رمز عبور جدید و تکرار آن مطابقت ندارند.', 'danger')
+            flash('New password and confirmation do not match.', 'danger')
         else:
             current_user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
             db.session.commit()
-            flash('رمز عبور با موفقیت تغییر کرد.', 'success')
+            flash('Password updated successfully.', 'success')
             
     return render_template('change_password.html')
 
@@ -91,10 +82,10 @@ def add_group():
             new_group = Group(name=group_name.strip())
             db.session.add(new_group)
             db.session.commit()
-            flash(f'Zone {group_name} initialized.', 'success')
+            flash(f'Zone "{group_name}" initialized successfully.', 'success')
         except Exception:
             db.session.rollback()
-            flash('ایجاد زون با خطا مواجه شد.', 'danger')
+            flash('Failed to create zone. It may already exist.', 'danger')
     return redirect(url_for('index'))
 
 @app.route('/add-device', methods=['POST'])
@@ -107,7 +98,7 @@ def add_device():
     password = request.form.get('password')
 
     if not name or not ip_address:
-        flash('نام و آدرس IP الزامی است.', 'danger')
+        flash('Device name and IP address are required.', 'danger')
         return redirect(url_for('index'))
 
     try:
@@ -120,10 +111,10 @@ def add_device():
         )
         db.session.add(new_device)
         db.session.commit()
-        flash(f'تجهیز {name} اضافه شد.', 'success')
+        flash(f'Device "{name}" added successfully.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash('خطا در ثبت پایگاه داده.', 'danger')
+        flash('Database registration error.', 'danger')
 
     return redirect(url_for('index'))
 
@@ -184,7 +175,7 @@ def device_health(device_id):
 
             connection.disconnect()
         except Exception as e:
-            logger.error(f"ارتباط Netmiko برای مانیتورینگ تجهیز {device.ip_address} شکست خورد: {e}")
+            logger.error(f"Netmiko connection failed for monitoring device {device.ip_address}: {e}")
 
     return render_template('health.html', device=device, health=health_data)
 
@@ -199,6 +190,10 @@ def vlan_manager():
     log_output = None
 
     if request.method == 'POST':
+        if platform.system() == "Windows":
+            flash("Ansible network modules are not supported on Windows. Please host the server on Linux.", "warning")
+            return render_template('vlan.html', devices=devices, log="Execution Blocked: Windows OS detected.")
+
         device_id = request.form.get('device_id')
         vlan_id = request.form.get('vlan_id')
         vlan_name = request.form.get('vlan_name')
@@ -207,17 +202,18 @@ def vlan_manager():
         device = Device.query.get_or_404(device_id)
         playbook_path = os.path.abspath(os.path.join(app.root_path, '..', 'playbooks', 'manage-vlan.yml'))
 
-        extra_vars = {
-            'ansible_host': device.ip_address,
-            'ansible_user': device.username,
-            'ansible_password': device.password,
-            'vlan_id': vlan_id,
-            'vlan_name': vlan_name,
-            'state': action
-        }
+        inventory = f"{device.ip_address},"
+        extra_vars = (
+            f"ansible_user={device.username} "
+            f"ansible_password={device.password} "
+            f"ansible_connection=network_cli "
+            f"ansible_network_os=ios "
+            f"ansible_ssh_common_args='-o StrictHostKeyChecking=no' "
+            f"vlan_id={vlan_id} vlan_name={vlan_name} state={action}"
+        )
 
         try:
-            command = ['ansible-playbook', playbook_path, '--extra-vars', json.dumps(extra_vars)]
+            command = ['ansible-playbook', '-i', inventory, playbook_path, '--extra-vars', extra_vars]
             result = subprocess.run(command, capture_output=True, text=True, timeout=ANSIBLE_TIMEOUT)
             log_output = result.stdout if result.returncode == 0 else result.stderr
 
@@ -231,7 +227,7 @@ def vlan_manager():
             db.session.add(log_entry)
             db.session.commit()
         except subprocess.TimeoutExpired:
-            log_output = "Timeout: ارتباط با تجهیز برقرار نشد."
+            log_output = "Timeout: Connection to the device failed or took too long."
         except Exception as e:
             log_output = f"Critical Execution Error: {str(e)}"
 
@@ -245,6 +241,10 @@ def acl_manager():
     log_output = None
 
     if request.method == 'POST':
+        if platform.system() == "Windows":
+            flash("Ansible network modules are not supported on Windows. Please host the server on Linux.", "warning")
+            return render_template('acl.html', devices=devices, log="Execution Blocked: Windows OS detected.")
+
         device_id = request.form.get('device_id')
         os_type = request.form.get('os_type')
         action = request.form.get('action')
@@ -258,21 +258,21 @@ def acl_manager():
         
         playbook_file = 'cisco_acl.yml' if os_type == 'cisco' else 'mikrotik_acl.yml'
         playbook_path = os.path.abspath(os.path.join(app.root_path, '..', 'playbooks', playbook_file))
-
-        extra_vars = {
-            'ansible_host': device.ip_address,
-            'ansible_user': device.username,
-            'ansible_password': device.password,
-            'action': action,
-            'protocol': protocol,
-            'acl_name': acl_name,
-            'src_ip': src_ip,
-            'dst_ip': dst_ip,
-            'port': port
-        }
+        
+        network_os = "ios" if os_type == 'cisco' else "routeros"
+        inventory = f"{device.ip_address},"
+        
+        extra_vars = (
+            f"ansible_user={device.username} "
+            f"ansible_password={device.password} "
+            f"ansible_connection=network_cli "
+            f"ansible_network_os={network_os} "
+            f"ansible_ssh_common_args='-o StrictHostKeyChecking=no' "
+            f"action={action} protocol={protocol} acl_name={acl_name} src_ip={src_ip} dst_ip={dst_ip} port={port}"
+        )
 
         try:
-            command = ['ansible-playbook', playbook_path, '--extra-vars', json.dumps(extra_vars)]
+            command = ['ansible-playbook', '-i', inventory, playbook_path, '--extra-vars', extra_vars]
             result = subprocess.run(command, capture_output=True, text=True, timeout=ANSIBLE_TIMEOUT)
             log_output = result.stdout if result.returncode == 0 else result.stderr
 
@@ -286,7 +286,7 @@ def acl_manager():
             db.session.add(log_entry)
             db.session.commit()
         except subprocess.TimeoutExpired:
-            log_output = "Timeout: ارتباط با تجهیز برقرار نشد."
+            log_output = "Timeout: Connection to the device failed or took too long."
         except Exception as e:
             log_output = f"Critical Execution Error: {str(e)}"
 
@@ -302,40 +302,35 @@ def acl_manager():
 def list_playbooks():
     devices = Device.query.all()
     
-    # اسکن پوشه playbooks و پیدا کردن تمام فایل‌های YML
     playbook_dir = os.path.abspath(os.path.join(app.root_path, '..', 'playbooks'))
     if not os.path.exists(playbook_dir):
-        os.makedirs(playbook_dir) # اگر پوشه نبود بسازد
+        os.makedirs(playbook_dir) 
         
     available_playbooks = [f for f in os.listdir(playbook_dir) if f.endswith(('.yml', '.yaml'))]
-    
     return render_template('playbook.html', devices=devices, available_playbooks=available_playbooks)
 
 
 @app.route('/upload-playbook', methods=['POST'])
 @login_required
 def upload_playbook():
-    """آپلود فایل‌های کاستوم Ansible"""
     if 'file' not in request.files:
-        flash('هیچ فایلی ارسال نشده است.', 'danger')
+        flash('No file data submitted.', 'danger')
         return redirect(url_for('playbook_runner'))
         
     file = request.files['file']
     if file.filename == '':
-        flash('فایلی انتخاب نشده است.', 'danger')
+        flash('No file selected for upload.', 'danger')
         return redirect(url_for('playbook_runner'))
         
-    # بررسی امنیت: فقط فایل‌های YAML مجاز هستند
     if file and (file.filename.endswith('.yml') or file.filename.endswith('.yaml')):
-        # ایمن‌سازی نام فایل (جلوگیری از هک مسیر)
         filename = secure_filename(file.filename)
         playbook_dir = os.path.abspath(os.path.join(app.root_path, '..', 'playbooks'))
         
         file.save(os.path.join(playbook_dir, filename))
-        logger.info(f"فایل پلی‌بوک جدید توسط {current_user.username} آپلود شد: {filename}")
-        flash(f'فایل {filename} با موفقیت به سرور اضافه شد.', 'success')
+        logger.info(f"New playbook uploaded by {current_user.username}: {filename}")
+        flash(f'File "{filename}" successfully uploaded to the server.', 'success')
     else:
-        flash('فقط فایل‌های با فرمت .yml یا .yaml مجاز هستند!', 'danger')
+        flash('Invalid format! Only .yml or .yaml files are allowed.', 'danger')
         
     return redirect(url_for('playbook_runner'))
 
@@ -344,30 +339,43 @@ def upload_playbook():
 @login_required
 def run_playbook():
     device_id = request.form.get('device_id')
-    # استفاده از secure_filename برای جلوگیری از اجرای فایل‌های مخرب خارج از پوشه
     playbook_name = secure_filename(request.form.get('playbook_name'))
-
     device = Device.query.get_or_404(device_id)
+
     playbook_path = os.path.abspath(os.path.join(app.root_path, '..', 'playbooks', playbook_name))
     
     if not os.path.exists(playbook_path):
-        flash('فایل Playbook روی سرور یافت نشد.', 'danger')
+        flash(f'Playbook file ({playbook_name}) not found on the server.', 'danger')
         return redirect(url_for('playbook_runner'))
 
-    extra_vars = {
-        'ansible_host': device.ip_address,
-        'ansible_user': device.username,
-        'ansible_password': device.password
-    }
+    if platform.system() == "Windows":
+        flash('Ansible network modules are not supported on Windows. Please host the server on Linux.', 'warning')
+        return redirect(url_for('playbook_runner'))
+
+    network_os = "routeros" if "mikrotik" in playbook_name.lower() else "ios"
+    inventory = f"{device.ip_address},"
+    
+    extra_vars = (
+        f"ansible_user={device.username} "
+        f"ansible_password={device.password} "
+        f"ansible_connection=network_cli "
+        f"ansible_network_os={network_os} "
+        f"ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
+    )
 
     try:
-        command = ['ansible-playbook', playbook_path, '--extra-vars', json.dumps(extra_vars)]
+        command = [
+            'ansible-playbook', 
+            '-i', inventory, 
+            playbook_path, 
+            '--extra-vars', extra_vars
+        ]
         result = subprocess.run(command, capture_output=True, text=True, timeout=ANSIBLE_TIMEOUT)
         
         log_entry = AuditLog(
             admin_id=current_user.id,
             target_ip=device.ip_address,
-            action_type=f"Custom Playbook: {playbook_name}",
+            action_type=f"Execute Playbook: {playbook_name}",
             status="Success" if result.returncode == 0 else "Failed",
             output=result.stdout if result.returncode == 0 else result.stderr
         )
@@ -375,10 +383,12 @@ def run_playbook():
         db.session.commit()
         
         if result.returncode == 0:
-            flash(f'فایل {playbook_name} روی {device.name} اجرا شد.', 'success')
+            flash(f'Playbook "{playbook_name}" executed successfully on {device.name}.', 'success')
         else:
-            flash(f'خطا در اجرای پلی‌بوک. گزارشات را بررسی کنید.', 'danger')
+            flash('Playbook execution failed. Check the logs for details.', 'danger')
             
+    except subprocess.TimeoutExpired:
+        flash('Timeout: Playbook execution took too long.', 'danger')
     except Exception as e:
         flash(f"System Error: {str(e)}", 'danger')
         

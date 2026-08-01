@@ -1,0 +1,15 @@
+---
+- name: Professional Configuration Backup for MikroTik RouterOS
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run '/export' on MikroTik device
+      community.network.routeros_command:
+        commands: /export
+      register: config_output
+
+    - name: Save configuration to local backups folder
+      ansible.builtin.copy:
+        content: "{{ config_output.stdout[0] }}"
+        dest: "../backups/mikrotik_{{ inventory_hostname }}_config.rsc"
+      delegate_to: localhost

@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory inside the container
-WORKDIR /opt/sadranet-panel
+WORKDIR /opt/montazeri-noc
 
 # Copy the requirements file and install dependencies
 COPY requirements.txt .

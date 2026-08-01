@@ -1,0 +1,15 @@
+---
+- name: Professional Configuration Backup for Cisco IOS
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run 'show running-config' on Cisco device
+      cisco.ios.ios_command:
+        commands: show running-config
+      register: config_output
+
+    - name: Save configuration to local backups folder
+      ansible.builtin.copy:
+        content: "{{ config_output.stdout[0] }}"
+        dest: "../backups/cisco_{{ inventory_hostname }}_config.txt"
+      delegate_to: localhost
