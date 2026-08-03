@@ -1,10 +1,10 @@
 # 🚀 Enterprise Network Automation & NOC Dashboard
 
-A functional, modern Network Operations Center (NOC) management platform built with Python (Flask), Netmiko, and Ansible. Designed to streamline L2/L3 provisioning, live telemetry diagnostics, and configuration management across Cisco IOS and MikroTik RouterOS infrastructure.
+A functional, modern Network Operations Center (NOC) management platform built with Python, Netmiko, and Ansible. Designed to streamline L2/L3 provisioning, live telemetry diagnostics, and configuration management across Cisco IOS and MikroTik RouterOS infrastructure.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
-![Flask](https://img.shields.io/badge/Framework-Flask-green.svg)
-![Ansible](https://img.shields.io/badge/Automation-Ansible-red.svg)
+![Flask](https://img.shields.io/badge/Framework-Flask%203.1.3-green.svg)
+![Ansible](https://img.shields.io/badge/Automation-Ansible%202.17-red.svg)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20(WSL)-lightgrey.svg)
 
 ---
@@ -21,10 +21,10 @@ A functional, modern Network Operations Center (NOC) management platform built w
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Core Libraries
 
-* **Backend:** Python 3.11, Flask, Flask-SQLAlchemy, Werkzeug
-* **Automation Engines:** Netmiko (SSH Telemetry), Ansible Core (Configuration Push)
+* **Backend:** Python 3.11+, Flask 3.1.3, Flask-SQLAlchemy, Werkzeug
+* **Automation Engines:** Netmiko 4.7.0 (SSH Telemetry), Ansible Core 2.17.0 (Configuration Push)
 * **Frontend:** Jinja2 Templates, HTML5, CSS3, FontAwesome 6
 
 ---
@@ -32,15 +32,15 @@ A functional, modern Network Operations Center (NOC) management platform built w
 ## 🚀 Quick Start & Installation
 
 ### 🐧 Running on Linux (Native & Recommended)
-Linux is the native home for Ansible. Running the project on Ubuntu/Debian/CentOS unlocks 100% of the platform's capabilities.
+Linux is the native home for network automation. Running the project on Ubuntu/Debian/CentOS unlocks 100% of the platform's capabilities.
 ```bash
-git clone https://github.com/Ali-Moghanni-ir/cisco-mikrotik-noc-panel
-cd network-automation-dashboard
-chmod +x run_linux.sh
-./run_linux.sh
+git clone [https://github.com/Ali-Moghanni-ir/cisco-mikrotik-noc-panel.git](https://github.com/Ali-Moghanni-ir/cisco-mikrotik-noc-panel.git)
+cd cisco-mikrotik-noc-panel
+chmod +x run.sh
 ```
-### 🪟 Running on Windows
-Important Architecture Note: Ansible natively does not support Windows as a Control Node. However, this project is built to handle this gracefully.
+./run.sh
+🪟 Running on Windows
+Important Architecture Note: Ansible natively does not support Windows as a Control Node. However, this project is built to handle this gracefully through environment markers.
 
 You have 3 options to run this platform on Windows:
 
@@ -54,29 +54,29 @@ Restart your computer.
 Open the "Ubuntu" terminal from your Start menu, navigate to the project folder, and run:
 
 ```Bash
-./run_linux.sh 
+./run.sh
 ```
+💡 WSL Magic: When running inside WSL, Python automatically detects a native Linux environment (sys_platform == 'linux'). Therefore, our requirements.txt will fully install ansible-core and all automation modules without any Windows restrictions!
+
 Option 2: Docker Desktop 🐳
 Run the entire platform in an isolated Linux container.
 
-```
 Install Docker Desktop.
-```
 
-Open terminal in the project folder and run:
+Open a terminal in the project folder and run:
 
 ```DOS
 docker compose up -d
 ```
 Option 3: Native Windows (Limited Mode)
-You can run the app directly on Windows without WSL or Docker by double-clicking run_win.bat.
+You can run the app directly on Windows using CMD or PowerShell without WSL/Docker.
 
 What works: The Web UI, Database, and Live SSH Telemetry (Netmiko) will work perfectly.
 
-What doesn't: Ansible playbook execution will be safely blocked by the system with an on-screen warning to prevent crashes.
+What doesn't: Ansible playbook execution will be safely blocked. The requirements.txt file uses OS-markers to automatically skip installing Ansible on Windows to prevent system crashes.
 
 🔑 Default Credentials
-Upon first execution, the system auto-generates the initial administrator account:
+Upon first execution, the system auto-generates the initial administrator account. Access the dashboard at:
 
 URL: http://localhost:5000
 
@@ -84,4 +84,4 @@ Username: admin
 
 Password: admin
 
-(⚠️ Please change the default credentials via the Credentials page after initial login).
+(⚠️ Please change the default credentials via the Credentials page after your initial login).
