@@ -34,7 +34,7 @@ A functional, modern Network Operations Center (NOC) management platform built w
 ### 🐧 Running on Linux (Native & Recommended)
 Linux is the native home for network automation. Running the project on Ubuntu/Debian/CentOS unlocks 100% of the platform's capabilities.
 ```bash
-git clone [https://github.com/Ali-Moghanni-ir/cisco-mikrotik-noc-panel.git](https://github.com/Ali-Moghanni-ir/cisco-mikrotik-noc-panel.git)
+git clone https://github.com/Ali-Moghanni-ir/cisco-mikrotik-noc-panel.git
 cd cisco-mikrotik-noc-panel
 chmod +x run.sh
 ```
