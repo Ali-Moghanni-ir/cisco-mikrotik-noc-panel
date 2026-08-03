@@ -121,10 +121,12 @@
                         <label for="device_name">Device Hostname</label>
                         <input type="text" id="device_name" name="device_name" class="form-control" placeholder="e.g., R1-Edge" required>
                     </div>
+                    
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="ip_address">IPv4 Address</label>
                         <input type="text" id="ip_address" name="ip_address" class="form-control" placeholder="192.168.10.1" required>
                     </div>
+                    
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="group_id">Target Zone</label>
                         <select id="group_id" name="group_id" class="form-control" required>
@@ -134,14 +136,26 @@
                             {% endfor %}
                         </select>
                     </div>
+
+                    <!-- بخش اضافه شده: کشوی نوع سیستم‌عامل -->
+                    <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                        <label for="os_type">OS Type / Vendor</label>
+                        <select id="os_type" name="os_type" class="form-control" required>
+                            <option value="cisco_ios">Cisco IOS</option>
+                            <option value="mikrotik_routeros">MikroTik RouterOS</option>
+                        </select>
+                    </div>
+                    
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="username">SSH Username</label>
                         <input type="text" id="username" name="username" class="form-control" placeholder="admin" required>
                     </div>
+                    
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="password">SSH Secret</label>
                         <input type="password" id="password" name="password" class="form-control" required>
                     </div>
+                    
                     <div class="form-group" style="grid-column: span 2;">
                         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-microchip"></i> Push to Database</button>
                     </div>
@@ -158,6 +172,7 @@
                     <tr>
                         <th>Hostname</th>
                         <th>Target IP</th>
+                        <th>OS Type</th>
                         <th>Zone Assignment</th>
                         <th>Actions</th>
                     </tr>
@@ -167,7 +182,24 @@
                     <tr>
                         <td style="font-weight: 600;">{{ device.name }}</td>
                         <td><span class="ip-mono">{{ device.ip_address }}</span></td>
-                        <td><span class="badge">{{ device.group.name if device.group else 'Unassigned' }}</span></td>
+                        <td>
+                            {% if device.os_type == 'cisco_ios' %}
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981; border-color: rgba(16, 185, 129, 0.2);">Cisco</span>
+                            {% elif device.os_type == 'mikrotik_routeros' %}
+                                <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B; border-color: rgba(245, 158, 11, 0.2);">MikroTik</span>
+                            {% else %}
+                                <span class="badge" style="background: rgba(148, 163, 184, 0.1); color: #94A3B8; border-color: rgba(148, 163, 184, 0.2);">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge">
+                                {% if device.group %}
+                                    {{ device.group.name }}
+                                {% else %}
+                                    Unassigned
+                                {% endif %}
+                            </span>
+                        </td>
                         <td>
                             <a href="{{ url_for('device_health', device_id=device.id) }}" class="btn-action">
                                 <i class="fa-solid fa-satellite-dish"></i> Diagnostics
@@ -176,7 +208,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" style="text-align: center; padding: 50px; color: var(--text-muted);">
+                        <td colspan="5" style="text-align: center; padding: 50px; color: var(--text-muted);">
                             <i class="fa-solid fa-box-open" style="font-size: 30px; margin-bottom: 10px; display: block; color: var(--border);"></i>
                             No hardware provisioned yet.
                         </td>
