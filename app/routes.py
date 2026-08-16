@@ -13,7 +13,7 @@ from app.models import Device, Group, AuditLog, User
 # ⚙️ Configuration & Logging
 # ==========================================
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
-logger = logging.getLogger("Montazeri_NOC")
+logger = logging.getLogger("Narsika_NOC")
 
 ANSIBLE_TIMEOUT = 120 
 

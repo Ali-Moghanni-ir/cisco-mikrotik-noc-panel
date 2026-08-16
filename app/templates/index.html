@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dashboard - Operations Center{% endblock %}</title>
+    <title>{% block title %}Dashboard - Narsika NOC Center{% endblock %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root { --bg: #0B1120; --surface: #1E293B; --surface-hover: #334155; --border: #334155; --text-main: #F8FAFC; --text-muted: #94A3B8; --primary: #38BDF8; --accent: #818CF8; --danger: #EF4444; --success: #10B981;}
@@ -58,7 +59,7 @@
 <div class="sidebar">
     <div class="sidebar-header">
         <i class="fa-solid fa-layer-group"></i>
-        <h2>Automation Panel</h2>
+        <h2>Narsika Panel</h2>
     </div>
     
     <div class="sidebar-menu">
@@ -91,7 +92,7 @@
     {% endwith %}
 
     {% block content %}
-    <!-- محتوای پیش‌فرض (داشبورد) -->
+    <!-- Default Main View (Dashboard) -->
     <div class="topbar">
         <h1>Infrastructure Topology</h1>
         <div class="user-profile">
@@ -137,7 +138,7 @@
                         </select>
                     </div>
 
-                    <!-- بخش اضافه شده: کشوی نوع سیستم‌عامل -->
+                    <!-- Target OS Selection -->
                     <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
                         <label for="os_type">OS Type / Vendor</label>
                         <select id="os_type" name="os_type" class="form-control" required>

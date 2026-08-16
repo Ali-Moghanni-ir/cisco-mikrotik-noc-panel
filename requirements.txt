@@ -1,28 +1,9 @@
-# ==========================================
-# 🌐 Web Framework & Security
-# ==========================================
-Flask==3.1.3
-Flask-SQLAlchemy==3.1.1
-Flask-Login==0.6.3
-Flask-Bcrypt==1.0.1
-Werkzeug==3.1.3
-
-# WSGI Server (Only installs on Linux/macOS)
-gunicorn==22.0.0; sys_platform != 'win32'
-
-# Waitress for Windows (Alternative WSGI if run on Windows)
-waitress==3.0.0; sys_platform == 'win32'
-
-# ==========================================
-# 📡 Network Automation & SSH
-# ==========================================
-netmiko==4.7.0
-paramiko==4.0.0
-telnetlib3==4.0.5
-ansible-pylibssh==1.1.0
-
-# ==========================================
-# ⚙️ Ansible Engine
-# ==========================================
-# Ansible officially supports Linux/macOS. Installation is skipped on Windows.
-ansible-core==2.17.0; sys_platform != 'win32'
+Flask>=3.0.0
+Flask-SQLAlchemy>=3.1.0
+Flask-Login>=0.6.3
+Flask-Bcrypt>=1.0.1
+netmiko>=4.3.0
+ansible-core>=2.15.0
+paramiko>=3.4.0
+cryptography>=42.0.0
+requests>=2.31.0
